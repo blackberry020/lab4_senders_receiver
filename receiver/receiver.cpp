@@ -16,6 +16,10 @@ bool isNumber(std::wstring str) {
 
 int main()
 {
+    const wchar_t name[13] = L"hStartSignal";
+
+    HANDLE hStartSignal = CreateEvent(NULL, TRUE, FALSE, name);
+
     std::wstring fileName = L"";
 
     while (fileName.find('.') == std::string::npos || fileName.substr(fileName.find('.') + 1) != L"bin" || count(fileName.begin(), fileName.end(), '.') > 1) {
@@ -62,6 +66,8 @@ int main()
 
         if (!status) std::wcout << "didn't create process " << i << std::endl;
     }
+
+    SetEvent(hStartSignal);
 
     system("pause");
 
