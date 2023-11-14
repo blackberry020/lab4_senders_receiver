@@ -3,14 +3,13 @@
 
 int main(int argc, char** args)
 {
+    std::cout << args[2] << std::endl;
 
-    HANDLE hStartSignal = OpenEvent(EVENT_ALL_ACCESS, TRUE, L"hStartSignal");
+    HANDLE hReadySignal = CreateEventA(NULL, TRUE, FALSE, args[2]);
 
-    std::cout << hStartSignal << std::endl;
+    std::cout << hReadySignal << std::endl;
 
-    WaitForSingleObject(hStartSignal, INFINITE);
-
-    std::cout << "sender " << args[1] << std::endl;
+    SetEvent(hReadySignal);
 
     system("pause");
     return 0;

@@ -16,10 +16,6 @@ bool isNumber(std::wstring str) {
 
 int main()
 {
-    const wchar_t name[13] = L"hStartSignal";
-
-    HANDLE hStartSignal = CreateEvent(NULL, TRUE, FALSE, name);
-
     std::wstring fileName = L"";
 
     while (fileName.find('.') == std::string::npos || fileName.substr(fileName.find('.') + 1) != L"bin" || count(fileName.begin(), fileName.end(), '.') > 1) {
@@ -46,8 +42,8 @@ int main()
 
     int senderCnt = std::stoi(senderCntStr.c_str());
 
-    STARTUPINFO* si = new STARTUPINFO[senderCnt];
-    PROCESS_INFORMATION* piCom = new PROCESS_INFORMATION[senderCnt];
+    STARTUPINFO* si = new STARTUPINFO[senderCnt + 1];
+    PROCESS_INFORMATION* piCom = new PROCESS_INFORMATION[senderCnt + 1];
 
     for (int i = 0; i < senderCnt; i++) {
         ZeroMemory(&si[i], sizeof(STARTUPINFO));
@@ -57,9 +53,18 @@ int main()
     std::wstring commandLine = L"sender.exe ";
     wchar_t* finalCommand;
 
+    HANDLE* readyEvents = new HANDLE[senderCnt + 2];
+
+    for (int i = 0; i < senderCnt; i++) {
+        std::wstring dop = L"event" + std::to_wstring(i);
+        readyEvents[i] = CreateEvent(NULL, TRUE, FALSE, _wcsdup(dop.c_str()));
+    }
+
     for (int i = 0; i < senderCnt; i++) {
 
-        finalCommand = _wcsdup((commandLine + std::to_wstring(i + 1)).c_str());
+        finalCommand = _wcsdup((commandLine + fileName + L" event" + std::to_wstring(i)).c_str());
+
+        std::wcout << finalCommand << std::endl;
 
         bool status = CreateProcessW(NULL, finalCommand, NULL, NULL, FALSE,
             CREATE_NEW_CONSOLE, NULL, NULL, &si[i], &piCom[i]);
@@ -67,7 +72,27 @@ int main()
         if (!status) std::wcout << "didn't create process " << i << std::endl;
     }
 
-    SetEvent(hStartSignal);
+    for (int i = 0; i < senderCnt; i++) {
+        WaitForSingleObject(readyEvents[i], INFINITE);
+    }
+
+    while (1) {
+        std::wcout << "Enter 1 to read a message and 2 to exit" << std::endl;
+
+        int option;
+        std::wcin >> option;
+
+        switch (option) {
+        case 1:
+            std::wcout << "reading" << std::endl;
+            break;
+        case 2:
+            return 0;
+        default:
+            std::wcout << "You entered wrong number, it should be 1 or 2" << std::endl;
+            break;
+        }
+    }
 
     system("pause");
 
