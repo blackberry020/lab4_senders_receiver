@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <windows.h>
 
@@ -23,7 +24,10 @@ int main()
         std::wcin >> fileName;
     }
 
-    // Create file for messages
+    std::ofstream outfile(fileName);
+
+    if (!outfile.is_open()) std::wcout << "didn't create" << std::endl;
+    outfile.close();
 
     std::wstring maxRecordNumStr = L"";
 
@@ -85,6 +89,7 @@ int main()
         switch (option) {
         case 1:
             std::wcout << "reading" << std::endl;
+            // wait if file is empty
             break;
         case 2:
             return 0;
