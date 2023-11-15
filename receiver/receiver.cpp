@@ -66,7 +66,7 @@ int main()
 
     for (int i = 0; i < senderCnt; i++) {
 
-        finalCommand = _wcsdup((commandLine + fileName + L" event" + std::to_wstring(i)).c_str());
+        finalCommand = _wcsdup((commandLine + fileName + L" event" + std::to_wstring(i) + L" " + maxRecordNumStr).c_str());
 
         std::wcout << finalCommand << std::endl;
 
@@ -81,21 +81,20 @@ int main()
     }
 
     while (1) {
-        std::wcout << "Enter 1 to read a message and 2 to exit" << std::endl;
+        std::wcout << "Enter read or exit" << std::endl;
 
-        int option;
+        std::wstring option;
         std::wcin >> option;
 
-        switch (option) {
-        case 1:
+        if (option == L"read") {
             std::wcout << "reading" << std::endl;
             // wait if file is empty
-            break;
-        case 2:
+        }
+        else if (option == L"exit") {
             return 0;
-        default:
-            std::wcout << "You entered wrong number, it should be 1 or 2" << std::endl;
-            break;
+        }
+        else {
+            std::wcout << "You entered wrong command" << std::endl;
         }
     }
 
