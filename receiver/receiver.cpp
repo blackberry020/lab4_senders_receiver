@@ -91,7 +91,6 @@ int main()
     }
 
     char* charMessage = new char[20];
-    char* extraInfo = new char[20 * maxRecordNum];
     std::string fileNameStr(fileName.begin(), fileName.end());
     std::ifstream fin;
     std::ofstream fout;
@@ -108,17 +107,30 @@ int main()
             if (fin.peek() == EOF) {
                 // wait
                 std::cout << "waiting" << std::endl;
+
+                fin.close();
+
                 continue;
             }
 
             fin.read(charMessage, 20);
             std::cout << charMessage << std::endl;
 
-            fin.read(extraInfo, 20 * (maxRecordNum - 1));
+            char dop;
+            std::string extraInfoStr = "";
+
+            while (1) {
+                dop = fin.get();
+                if (fin.fail()) break;
+                else extraInfoStr += dop;
+            }
+
             fin.close();
 
             fout.open(fileName, std::ios_base::binary | std::ios_base::trunc);
-            fout.write(extraInfo, 20 * maxRecordNum);
+
+            fout.write(extraInfoStr.c_str(), extraInfoStr.length());
+
             fout.close();
 
             ReleaseSemaphore(hMaxNumRecordsSem, 1, NULL);
