@@ -3,7 +3,7 @@
 #include <string>
 #include <windows.h>
 
-bool isNumber(std::wstring str) {
+bool isNumber(std::string str) {
 
     if (str.empty()) return false;
 
@@ -17,84 +17,117 @@ bool isNumber(std::wstring str) {
 
 int main()
 {
-    std::wstring fileName = L"";
+    std::string fileName = "";
 
-    while (fileName.find('.') == std::string::npos || fileName.substr(fileName.find('.') + 1) != L"bin" || count(fileName.begin(), fileName.end(), '.') > 1) {
-        std::wcout << "Enter your bin file name" << std::endl;
-        std::wcin >> fileName;
+    while ( fileName.find('.') == std::string::npos || 
+            fileName.substr(fileName.find('.') + 1) != "bin" || 
+            count(fileName.begin(), fileName.end(), '.') > 1) {
+
+        std::cout << "Enter your bin file name" << std::endl;
+        std::cin >> fileName;
     }
 
-    std::ofstream outfile(fileName);
-
-    if (!outfile.is_open()) std::wcout << "didn't create" << std::endl;
+    std::ofstream outfile(fileName, std::ios_base::trunc);
+    if (!outfile.is_open()) std::cout << "didn't create" << std::endl;
     outfile.close();
 
-    std::wstring maxRecordNumStr = L"";
+    std::string maxRecordNumStr = "";
 
     while (!isNumber(maxRecordNumStr)) {
-        std::wcout << "Enter a maximum number of records in your file" << std::endl;
-        std::wcin >> maxRecordNumStr;
+        std::cout << "Enter a maximum number of records in your file" << std::endl;
+        std::cin >> maxRecordNumStr;
     }
 
     int maxRecordNum = std::stoi(maxRecordNumStr.c_str());
 
-    std::wstring senderCntStr = L"";
+    std::string senderCntStr = "";
     while (!isNumber(senderCntStr)) {
-        std::wcout << "Enter the number of senders" << std::endl;
-        std::wcin >> senderCntStr;
+        std::cout << "Enter the number of senders" << std::endl;
+        std::cin >> senderCntStr;
     }
 
     int senderCnt = std::stoi(senderCntStr.c_str());
 
-    STARTUPINFO* si = new STARTUPINFO[senderCnt + 1];
+    STARTUPINFOA* si = new STARTUPINFOA[senderCnt + 1];
     PROCESS_INFORMATION* piCom = new PROCESS_INFORMATION[senderCnt + 1];
 
     for (int i = 0; i < senderCnt; i++) {
-        ZeroMemory(&si[i], sizeof(STARTUPINFO));
-        si[i].cb = sizeof(STARTUPINFO);
+        ZeroMemory(&si[i], sizeof(STARTUPINFOA));
+        si[i].cb = sizeof(STARTUPINFOA);
     }
 
-    std::wstring commandLine = L"sender.exe ";
-    wchar_t* finalCommand;
+    std::string commandLine = "sender.exe ";
+    std::string finalCommandStr = "";
 
     HANDLE* readyEvents = new HANDLE[senderCnt + 2];
 
     for (int i = 0; i < senderCnt; i++) {
-        std::wstring dop = L"event" + std::to_wstring(i);
-        readyEvents[i] = CreateEvent(NULL, TRUE, FALSE, _wcsdup(dop.c_str()));
+        std::string dop = "event" + std::to_string(i);
+        readyEvents[i] = CreateEventA(NULL, TRUE, FALSE, dop.c_str());
     }
+
+    HANDLE hMaxNumRecordsSem = CreateSemaphoreA(NULL, maxRecordNum, maxRecordNum, "hMaxNumRecordsSem");
 
     for (int i = 0; i < senderCnt; i++) {
 
-        finalCommand = _wcsdup((commandLine + fileName + L" event" + std::to_wstring(i) + L" " + maxRecordNumStr).c_str());
+        finalCommandStr = commandLine + fileName + " event" + std::to_string(i) + " " + 
+                          "hMaxNumRecordsSem";
+        
+        std::cout << " " << finalCommandStr << std::endl;
 
-        std::wcout << finalCommand << std::endl;
+        char* finalCommand = new char[finalCommandStr.length() + 1];
+        strcpy_s(finalCommand, finalCommandStr.length() + 1, finalCommandStr.c_str());
 
-        bool status = CreateProcessW(NULL, finalCommand, NULL, NULL, FALSE,
+        std::cout << finalCommand << std::endl;
+
+        bool status = CreateProcessA(NULL, finalCommand, NULL, NULL, FALSE,
             CREATE_NEW_CONSOLE, NULL, NULL, &si[i], &piCom[i]);
 
-        if (!status) std::wcout << "didn't create process " << i << std::endl;
+        if (!status) std::cout << "didn't create process " << i << std::endl;
     }
 
     for (int i = 0; i < senderCnt; i++) {
         WaitForSingleObject(readyEvents[i], INFINITE);
     }
 
+    char* charMessage = new char[20];
+    char* extraInfo = new char[20 * maxRecordNum];
+    std::string fileNameStr(fileName.begin(), fileName.end());
+    std::ifstream fin;
+    std::ofstream fout;
+
     while (1) {
-        std::wcout << "Enter read or exit" << std::endl;
+        std::cout << "Enter read or exit" << std::endl;
 
-        std::wstring option;
-        std::wcin >> option;
+        std::string option;
+        std::cin >> option;
 
-        if (option == L"read") {
-            std::wcout << "reading" << std::endl;
-            // wait if file is empty
+        if (option == "read") {
+            fin.open(fileName, std::ios_base::binary);
+
+            if (fin.peek() == EOF) {
+                // wait
+                std::cout << "waiting" << std::endl;
+                continue;
+            }
+
+            fin.read(charMessage, 20);
+            std::cout << charMessage << std::endl;
+
+            fin.read(extraInfo, 20 * (maxRecordNum - 1));
+            fin.close();
+
+            fout.open(fileName, std::ios_base::binary | std::ios_base::trunc);
+            fout.write(extraInfo, 20 * maxRecordNum);
+            fout.close();
+
+            ReleaseSemaphore(hMaxNumRecordsSem, 1, NULL);
         }
-        else if (option == L"exit") {
+        else if (option == "exit") {
             return 0;
         }
         else {
-            std::wcout << "You entered wrong command" << std::endl;
+            std::cout << "You entered wrong command" << std::endl;
         }
     }
 

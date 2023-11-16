@@ -23,10 +23,9 @@ int main(int argc, char** args)
     std::ofstream fout;
 
     HANDLE hReadySignal = CreateEventA(NULL, TRUE, FALSE, args[2]);
+    HANDLE hMaxNumRecordsSem = OpenSemaphoreA(SEMAPHORE_ALL_ACCESS, TRUE, args[3]);
 
     SetEvent(hReadySignal);
-
-    int maxRecordsNum = atoi(args[3]);
 
     std::string command = "";
 
@@ -37,29 +36,32 @@ int main(int argc, char** args)
 
         if (command == "exit") {
             return 0;
-        }   
-        else {
-            if (command.find(' ') != std::string::npos && command.substr(0, command.find(' ')) == "send") {
-                std::string message = command.substr(command.find(' ') + 1);
-
-                if (fileSize(fileName) > maxRecordsNum) {
-                    std::cout << "file is full, can't write this message" << std::endl;
-                    continue;
-                }
-
-                if (message.length() > 20) {
-                    std::cout << "message length should not be greater than 20" << std::endl;
-                    continue;
-                }
-
-                fout.open(fileName, std::ios::binary | std::ios::app);
-
-                fout.write(message.c_str(), 20);
-
-                fout.close();
-            }
-            else std::cout << "unknown command" << std::endl;
         }
+
+        WaitForSingleObject(hMaxNumRecordsSem, INFINITE);
+
+        if (command.find(' ') != std::string::npos && command.substr(0, command.find(' ')) == "send") {
+            std::string message = command.substr(command.find(' ') + 1);
+
+            if (message.length() > 20) {
+                std::cout << "message length should not be greater than 20" << std::endl;
+
+                ReleaseSemaphore(hMaxNumRecordsSem, 1, NULL);
+
+                continue;
+            }
+
+            fout.open(fileName, std::ios::binary | std::ios::app);
+
+            fout.write(message.c_str(), 20);
+
+            fout.close();
+        }
+        else {
+            std::cout << "unknown command" << std::endl;
+            ReleaseSemaphore(hMaxNumRecordsSem, 1, NULL);
+        }
+        
     }
 
     system("pause");
