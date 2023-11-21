@@ -95,6 +95,8 @@ int main()
     std::ifstream fin;
     std::ofstream fout;
 
+    bool ableToRead = false;
+
     while (1) {
         std::cout << "Enter read or exit" << std::endl;
 
@@ -102,16 +104,23 @@ int main()
         std::cin >> option;
 
         if (option == "read") {
-            fin.open(fileName, std::ios_base::binary);
 
-            if (fin.peek() == EOF) {
-                // wait
-                std::cout << "waiting" << std::endl;
+            while (!ableToRead) {
+
+                fin.open(fileName, std::ios_base::binary);
+
+                if (fin.peek() != EOF) {
+                    ableToRead = true;
+                    //std::cout << "reading" << std::endl;
+                }
+                //else std::cout << "waiting" << std::endl;
 
                 fin.close();
-
-                continue;
             }
+
+            ableToRead = false;
+
+            fin.open(fileName, std::ios_base::binary);
 
             fin.read(charMessage, 20);
             std::cout << charMessage << std::endl;
