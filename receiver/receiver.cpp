@@ -3,6 +3,7 @@
 #include <string>
 #include <windows.h>
 
+// function for checking if a given string is number
 bool isNumber(std::string str) {
 
     if (str.empty()) return false;
@@ -17,20 +18,15 @@ bool isNumber(std::string str) {
 
 int main()
 {
-    std::string fileName = "";
-
-    while ( fileName.find('.') == std::string::npos || 
-            fileName.substr(fileName.find('.') + 1) != "bin" || 
-            count(fileName.begin(), fileName.end(), '.') > 1) {
-
-        std::cout << "Enter your bin file name" << std::endl;
-        std::cin >> fileName;
-    }
-
+    std::string fileName;
+    std::cout << "Enter your file name" << std::endl;
+    std::cin >> fileName;
     std::ofstream outfile(fileName, std::ios_base::trunc);
+
     if (!outfile.is_open()) std::cout << "didn't create" << std::endl;
     outfile.close();
 
+    // read maximum amount of records in file
     std::string maxRecordNumStr = "";
 
     while (!isNumber(maxRecordNumStr)) {
@@ -40,6 +36,7 @@ int main()
 
     int maxRecordNum = std::stoi(maxRecordNumStr.c_str());
 
+    // read number of senders
     std::string senderCntStr = "";
     while (!isNumber(senderCntStr)) {
         std::cout << "Enter the number of senders" << std::endl;
@@ -48,8 +45,10 @@ int main()
 
     int senderCnt = std::stoi(senderCntStr.c_str());
 
+    // for processes
     STARTUPINFOA* si = new STARTUPINFOA[senderCnt + 1];
     PROCESS_INFORMATION* piCom = new PROCESS_INFORMATION[senderCnt + 1];
+    HANDLE* readyEvents = new HANDLE[senderCnt + 2];
 
     for (int i = 0; i < senderCnt; i++) {
         ZeroMemory(&si[i], sizeof(STARTUPINFOA));
@@ -59,26 +58,21 @@ int main()
     std::string commandLine = "sender.exe ";
     std::string finalCommandStr = "";
 
-    HANDLE* readyEvents = new HANDLE[senderCnt + 2];
-
+    // create events to show what processes are ready 
     for (int i = 0; i < senderCnt; i++) {
         std::string dop = "event" + std::to_string(i);
         readyEvents[i] = CreateEventA(NULL, TRUE, FALSE, dop.c_str());
     }
 
+    // semaphore to control the amount of records
     HANDLE hMaxNumRecordsSem = CreateSemaphoreA(NULL, maxRecordNum, maxRecordNum, "hMaxNumRecordsSem");
 
     for (int i = 0; i < senderCnt; i++) {
-
+        // forming a command
         finalCommandStr = commandLine + fileName + " event" + std::to_string(i) + " " + 
                           "hMaxNumRecordsSem";
-        
-        std::cout << " " << finalCommandStr << std::endl;
-
         char* finalCommand = new char[finalCommandStr.length() + 1];
         strcpy_s(finalCommand, finalCommandStr.length() + 1, finalCommandStr.c_str());
-
-        std::cout << finalCommand << std::endl;
 
         bool status = CreateProcessA(NULL, finalCommand, NULL, NULL, FALSE,
             CREATE_NEW_CONSOLE, NULL, NULL, &si[i], &piCom[i]);
@@ -86,6 +80,7 @@ int main()
         if (!status) std::cout << "didn't create process " << i << std::endl;
     }
 
+    // wait for all processes
     for (int i = 0; i < senderCnt; i++) {
         WaitForSingleObject(readyEvents[i], INFINITE);
     }
@@ -97,6 +92,7 @@ int main()
 
     bool ableToRead = false;
 
+    // constantly waiting for a command
     while (1) {
         std::cout << "Enter read or exit" << std::endl;
 
@@ -105,23 +101,22 @@ int main()
 
         if (option == "read") {
 
+            // read if we can, otherwise wait for the appearance of a new record
             while (!ableToRead) {
 
                 fin.open(fileName, std::ios_base::binary);
 
                 if (fin.peek() != EOF) {
                     ableToRead = true;
-                    //std::cout << "reading" << std::endl;
                 }
-                //else std::cout << "waiting" << std::endl;
-
+                
                 fin.close();
             }
 
             ableToRead = false;
 
+            // split the message and left records
             fin.open(fileName, std::ios_base::binary);
-
             fin.read(charMessage, 20);
             std::cout << charMessage << std::endl;
 
@@ -136,12 +131,12 @@ int main()
 
             fin.close();
 
+            //rewrite file without read record
             fout.open(fileName, std::ios_base::binary | std::ios_base::trunc);
-
             fout.write(extraInfoStr.c_str(), extraInfoStr.length());
-
             fout.close();
 
+            // we have read one record, so this space is available for the other 
             ReleaseSemaphore(hMaxNumRecordsSem, 1, NULL);
         }
         else if (option == "exit") {
