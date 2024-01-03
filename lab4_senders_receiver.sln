@@ -9,6 +9,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "receiver", "receiver\receiv
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sender", "sender\sender.vcxproj", "{0CDD71FA-4784-4D72-8BF7-9F9AA38C4799}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests\Tests.vcxproj", "{5C90A0F6-7708-48CC-BB4E-921818CDC078}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{683A6053-F102-4FCD-AAEF-69594DFDC555}"
+	ProjectSection(SolutionItems) = preProject
+		func.h = func.h
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +48,14 @@ Global
 		{0CDD71FA-4784-4D72-8BF7-9F9AA38C4799}.Release|x64.Build.0 = Release|x64
 		{0CDD71FA-4784-4D72-8BF7-9F9AA38C4799}.Release|x86.ActiveCfg = Release|Win32
 		{0CDD71FA-4784-4D72-8BF7-9F9AA38C4799}.Release|x86.Build.0 = Release|Win32
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Debug|x64.ActiveCfg = Debug|x64
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Debug|x64.Build.0 = Debug|x64
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Debug|x86.ActiveCfg = Debug|Win32
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Debug|x86.Build.0 = Debug|Win32
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Release|x64.ActiveCfg = Release|x64
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Release|x64.Build.0 = Release|x64
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Release|x86.ActiveCfg = Release|Win32
+		{5C90A0F6-7708-48CC-BB4E-921818CDC078}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
